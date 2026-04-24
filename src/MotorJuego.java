@@ -32,4 +32,38 @@ public class MotorJuego {
             this.oponente = j1;
         }
     }
+
+    public Jugador  getActivo()        { return activo; }
+    public Jugador  getOponente()      { return oponente; }
+    public int      getNumeroTurno()   { return numeroTurno; }
+    public boolean  isJuegoTerminado() { return juegoTerminado; }
+    public Jugador  getGanador()       { return ganador; }
+    public boolean  esPrimerTurno()    { return numeroTurno == 1; }
+    public boolean  yaJugoUnaCarta()   { return yaJugoUnaCarta; }
+    public boolean  yaAtaco()          { return yaAtaco; }
+
+    public List<String> getLog()       { return log; }
+
+    public String getUltimoMensaje() {
+        if (log.isEmpty()) return "";
+        return log.get(log.size() - 1);
+    }
+
+    private void log(String mensaje) {
+        log.add(mensaje);
+    }
+
+    public void iniciarTurno() {
+        yaJugoUnaCarta = false;
+        yaAtaco        = false;
+
+        log("TURNO " + numeroTurno + " — " + activo.getNombre());
+
+        if (!activo.robarCarta()) {
+            log(activo.getNombre() + " no tiene cartas en su mazo. ¡PIERDE!");
+            terminarJuego(oponente);
+        } else {
+            log(activo.getNombre() + " roba una carta.");
+        }
+    }
 }
