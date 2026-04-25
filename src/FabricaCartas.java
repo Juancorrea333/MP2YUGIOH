@@ -42,3 +42,124 @@ public class FabricaCartas {
         lista.add(new Monstruo("Dios del Abismo",            4000, 3500, 12));
         return lista;
     }
+        private static List<Carta> crearMagicas() {
+        List<Carta> lista = new ArrayList<>();
+        lista.add(new Magica(
+            "Olla de la Codicia",
+            "Robas 2 cartas de tu mazo.",
+            (u, o) -> { u.robarCarta(); u.robarCarta(); }
+        ));
+        lista.add(new Magica(
+            "Dian Keto la Curadora",
+            "Recuperas 1000 LP.",
+            (u, o) -> {
+                u.recuperarLp(1000);
+                System.out.println(u.getNombre() + " recupera 1000 LP. LP actual: " + u.getLp());
+            }
+        ));
+        lista.add(new Magica(
+            "Trueno del Cielo",
+            "Destruye el monstruo con menos ATK del oponente.",
+            (u, o) -> {
+                if (!o.tieneMonstruos()) {
+                    System.out.println("El oponente no tiene monstruos en campo.");
+                    return;
+                }
+                Monstruo objetivo = o.getCampo().get(0);
+                for (Monstruo m : o.getCampo()) {
+                    if (m.getAtk() < objetivo.getAtk()) objetivo = m;
+                }
+                System.out.println(objetivo.getNombre() + " fue destruido por Trueno del Cielo.");
+                o.removerMonstruo(objetivo);
+            }
+        ));
+        lista.add(new Magica(
+            "Axe of Despair",
+            "El monstruo con más ATK propio gana 1000 ATK este turno.",
+            (u, o) -> {
+                if (!u.tieneMonstruos()) {
+                    System.out.println("No tienes monstruos en campo.");
+                    return;
+                }
+                Monstruo objetivo = u.getCampo().get(0);
+                for (Monstruo m : u.getCampo()) {
+                    if (m.getAtk() > objetivo.getAtk()) objetivo = m;
+                }
+                objetivo.aumentarAtk(1000);
+                System.out.println(objetivo.getNombre() + " ahora tiene ATK: " + objetivo.getAtk());
+            }
+        ));
+        lista.add(new Magica(
+            "Misil de Fuego",
+            "El oponente recibe 800 puntos de daño directo.",
+            (u, o) -> {
+                o.recibirDanio(800);
+                System.out.println(o.getNombre() + " recibe 800 de daño. LP: " + o.getLp());
+            }
+        ));
+        lista.add(new Magica(
+            "Tierra Arrasada",
+            "Destruye todos los monstruos del oponente.",
+            (u, o) -> {
+                if (!o.tieneMonstruos()) {
+                    System.out.println("El oponente no tiene monstruos.");
+                    return;
+                }
+                System.out.println("¡Todos los monstruos de " + o.getNombre() + " son destruidos!");
+                o.limpiarCampo();
+            }
+        ));
+        lista.add(new Magica(
+            "Libro de la Luna",
+            "El monstruo rival con más ATK pasa a posición de DEFENSA.",
+            (u, o) -> {
+                if (!o.tieneMonstruos()) {
+                    System.out.println("El oponente no tiene monstruos.");
+                    return;
+                }
+                Monstruo objetivo = o.getCampo().get(0);
+                for (Monstruo m : o.getCampo()) {
+                    if (m.getAtk() > objetivo.getAtk()) objetivo = m;
+                }
+                objetivo.setPosicion(Posicion.DEFENSA);
+                objetivo.agotarAtaque();
+                System.out.println(objetivo.getNombre() + " ahora está en DEFENSA.");
+            }
+        ));
+        lista.add(new Magica(
+            "Torbellino Oscuro",
+            "Robas 1 carta y el oponente recibe 500 de daño.",
+            (u, o) -> {
+                u.robarCarta();
+                o.recibirDanio(500);
+                System.out.println(u.getNombre() + " roba 1 carta. " + o.getNombre() + " recibe 500 de daño.");
+            }
+        ));
+        lista.add(new Magica(
+            "Oferta de Sangre",
+            "Descartas la primera carta de tu mano y recuperas 2000 LP.",
+            (u, o) -> {
+                if (u.getMano().isEmpty()) {
+                    System.out.println("No tienes cartas en mano para descartar.");
+                    return;
+                }
+                Carta descartada = u.getMano().remove(0);
+                u.recuperarLp(2000);
+                System.out.println("Descartaste " + descartada.getNombre() + " y recuperaste 2000 LP.");
+            }
+        ));
+        lista.add(new Magica(
+            "Equilibrio Roto",
+            "Si tienes menos LP que el oponente, le infliges la diferencia como daño.",
+            (u, o) -> {
+                if (u.getLp() < o.getLp()) {
+                    int diferencia = o.getLp() - u.getLp();
+                    o.recibirDanio(diferencia);
+                    System.out.println("¡Diferencia de " + diferencia + " aplicada a " + o.getNombre() + "! LP: " + o.getLp());
+                } else {
+                    System.out.println("No tienes menos LP que el oponente. Sin efecto.");
+                }
+            }
+        ));
+        return lista;
+    }
