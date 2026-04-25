@@ -19,4 +19,3 @@ public class Jugador {
     public boolean tieneMonstruos() { return !campo.isEmpty(); }
     public boolean tieneTrampas()   { return !trampas.isEmpty(); }
     public void agregarAlMazo(Carta c) { mazo.add(c); }
-}
