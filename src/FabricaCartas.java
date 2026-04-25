@@ -163,3 +163,123 @@ public class FabricaCartas {
         ));
         return lista;
     }
+    private static List<Carta> crearTrampas() {
+        List<Carta> lista = new ArrayList<>();
+        lista.add(new Trampa(
+            "Cilindro Mágico",
+            "Cuando el oponente ataca, refleja el ATK del atacante como daño a su LP.",
+            CondicionTrampa.EN_ATAQUE,
+            (u, o) -> {
+                if (!o.tieneMonstruos()) return;
+                Monstruo atacante = o.getCampo().get(o.getCampo().size() - 1);
+                o.recibirDanio(atacante.getAtk());
+                System.out.println(o.getNombre() + " recibe " + atacante.getAtk() + " de daño reflejado. LP: " + o.getLp());
+            }
+        ));
+        lista.add(new Trampa(
+            "Fuerza de Espejo",
+            "Cuando el oponente ataca, destruye todos sus monstruos en posición de ataque.",
+            CondicionTrampa.EN_ATAQUE,
+            (u, o) -> {
+                List<Monstruo> aDestruir = new ArrayList<>();
+                for (Monstruo m : o.getCampo()) {
+                    if (m.getPosicion() == Posicion.ATAQUE) aDestruir.add(m);
+                }
+                for (Monstruo m : aDestruir) o.removerMonstruo(m);
+                System.out.println("¡Todos los monstruos atacantes de " + o.getNombre() + " destruidos!");
+            }
+        ));
+        lista.add(new Trampa(
+            "Trampa del Agujero",
+            "El monstruo que ataca pierde 1500 ATK hasta el fin del turno.",
+            CondicionTrampa.EN_ATAQUE,
+            (u, o) -> {
+                if (!o.tieneMonstruos()) return;
+                Monstruo atacante = null;
+                for (Monstruo m : o.getCampo()) {
+                    if (!m.puedeAtacar()) { atacante = m; break; }
+                }
+                if (atacante == null) atacante = o.getCampo().get(o.getCampo().size() - 1);
+                int reduccion = Math.min(1500, atacante.getAtk());
+                atacante.aumentarAtk(-reduccion);
+                System.out.println(atacante.getNombre() + " pierde 1500 ATK. ATK actual: " + atacante.getAtk());
+            }
+        ));
+        lista.add(new Trampa(
+            "Agujero Trampa",
+            "Cuando el oponente invoca un monstruo con ATK ≥ 1000, lo destruye.",
+            CondicionTrampa.AL_INVOCAR,
+            (u, o) -> {
+                if (!o.tieneMonstruos()) return;
+                Monstruo recienInvocado = o.getCampo().get(o.getCampo().size() - 1);
+                if (recienInvocado.getAtk() >= 1000) {
+                    o.removerMonstruo(recienInvocado);
+                    System.out.println(recienInvocado.getNombre() + " fue destruido al ser invocado (ATK ≥ 1000).");
+                } else {
+                    System.out.println("El monstruo invocado tiene ATK < 1000, la trampa no aplica.");
+                }
+            }
+        ));
+        lista.add(new Trampa(
+            "Trampa Dimensional",
+            "Cuando el oponente invoca un monstruo, lo regresa a su mano.",
+            CondicionTrampa.AL_INVOCAR,
+            (u, o) -> {
+                if (!o.tieneMonstruos()) return;
+                Monstruo recienInvocado = o.getCampo().get(o.getCampo().size() - 1);
+                o.removerMonstruo(recienInvocado);
+                o.getMano().add(recienInvocado);
+                System.out.println(recienInvocado.getNombre() + " regresó a la mano de " + o.getNombre() + ".");
+            }
+        ));
+        lista.add(new Trampa(
+            "Escudo Divino",
+            "Cuando vayas a recibir daño de combate, lo reduces a la mitad.",
+            CondicionTrampa.AL_RECIBIR_DANIO,
+            (u, o) -> {
+                System.out.println(u.getNombre() + " activa Escudo Divino: el daño se reduce a la mitad.");
+            }
+        ));
+        lista.add(new Trampa(
+            "Espejo del Alma",
+            "Cuando vayas a recibir daño, el oponente recibe la misma cantidad.",
+            CondicionTrampa.AL_RECIBIR_DANIO,
+            (u, o) -> {
+                System.out.println(u.getNombre() + " activa Espejo del Alma: el oponente también recibirá el daño.");
+            }
+        ));
+        lista.add(new Trampa(
+            "Juicio Solemne",
+            "Pagas la mitad de tus LP para limpiar el campo del oponente.",
+            CondicionTrampa.INMEDIATA,
+            (u, o) -> {
+                int costo = u.getLp() / 2;
+                u.recibirDanio(costo);
+                o.limpiarCampo();
+                System.out.println(u.getNombre() + " paga " + costo + " LP. Campo de " + o.getNombre() + " limpiado.");
+            }
+        ));
+        lista.add(new Trampa(
+            "Tributo Torrencial",
+            "Cuando un monstruo es invocado, destruye todos los monstruos en campo.",
+            CondicionTrampa.INMEDIATA,
+            (u, o) -> {
+                u.limpiarCampo();
+                o.limpiarCampo();
+                System.out.println("¡Tributo Torrencial! Todos los monstruos en campo fueron destruidos.");
+            }
+        ));
+        lista.add(new Trampa(
+            "Ataque Imprudente",
+            "Robas 2 cartas pero pierdes 1000 LP.",
+            CondicionTrampa.INMEDIATA,
+            (u, o) -> {
+                u.recibirDanio(1000);
+                u.robarCarta();
+                u.robarCarta();
+                System.out.println(u.getNombre() + " pierde 1000 LP y roba 2 cartas.");
+            }
+        ));
+        return lista;
+    }
+}
