@@ -42,7 +42,7 @@ public class FabricaCartas {
         lista.add(new Monstruo("Dios del Abismo",            4000, 3500, 12));
         return lista;
     }
-        private static List<Carta> crearMagicas() {
+    private static List<Carta> crearMagicas() {
         List<Carta> lista = new ArrayList<>();
         lista.add(new Magica(
             "Olla de la Codicia",

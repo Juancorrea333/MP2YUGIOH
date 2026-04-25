@@ -19,7 +19,8 @@ public class Jugador {
     public boolean tieneMonstruos() { return !campo.isEmpty(); }
     public boolean tieneTrampas()   { return !trampas.isEmpty(); }
     public void agregarAlMazo(Carta c) { mazo.add(c); }
-            if (mazo.isEmpty()) return false;
+    public boolean robarCarta() {
+        if (mazo.isEmpty()) return false;
         mano.add(mazo.remove(0));
         return true;
     }
@@ -29,6 +30,7 @@ public class Jugador {
     public void agotarAtaquesMonstruos() {
         for (Monstruo m : campo) m.agotarAtaque();
     }
+
     public void colocarTrampa(Trampa t) { trampas.add(t); }
     public void removerTrampa(Trampa t) { trampas.remove(t); }
     public void recibirDanio(int cant)  { lp -= cant; if (lp < 0) lp = 0; }
