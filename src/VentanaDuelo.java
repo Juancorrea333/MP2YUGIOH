@@ -193,3 +193,57 @@ public class VentanaDuelo extends JFrame {
             JOptionPane.showMessageDialog(this, error, "Error", JOptionPane.WARNING_MESSAGE);
         }
     }
+
+    private void accionAtacar() {
+        if (motor.esPrimerTurno()) {
+            JOptionPane.showMessageDialog(this, "No se puede atacar en el primer turno.", "Acción no permitida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (motor.yaAtaco()) {
+            JOptionPane.showMessageDialog(this, "Ya atacaste este turno.", "Acción no permitida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        List<Monstruo> campoPropio = motor.getActivo().getCampo();
+        if (campoPropio.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No tienes monstruos en campo.", "Sin monstruos", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String[] atacantes = campoPropio.stream()
+            .map(m -> m.getNombre() + " ATK:" + m.getAtk() + " " + m.getPosicion())
+            .toArray(String[]::new);
+        String eleccionAtacante = (String) JOptionPane.showInputDialog(this,
+            "Elige tu monstruo atacante:",
+            "Atacar", JOptionPane.PLAIN_MESSAGE, null, atacantes, atacantes[0]);
+        if (eleccionAtacante == null) return;
+
+        int indiceAtacante = 0;
+        for (int i = 0; i < atacantes.length; i++) {
+            if (atacantes[i].equals(eleccionAtacante)) { indiceAtacante = i; break; }
+        }
+
+        int indiceDefensor = -1;
+        List<Monstruo> campoRival = motor.getOponente().getCampo();
+
+        if (!campoRival.isEmpty()) {
+            String[] defensores = campoRival.stream()
+                .map(m -> m.getNombre() + " ATK:" + m.getAtk() + " DEF:" + m.getDef() + " " + m.getPosicion())
+                .toArray(String[]::new);
+            String eleccionDefensor = (String) JOptionPane.showInputDialog(this,
+                "Elige el monstruo rival a atacar:",
+                "Seleccionar objetivo", JOptionPane.PLAIN_MESSAGE, null, defensores, defensores[0]);
+            if (eleccionDefensor == null) return;
+            for (int i = 0; i < defensores.length; i++) {
+                if (defensores[i].equals(eleccionDefensor)) { indiceDefensor = i; break; }
+            }
+        }
+
+        String error = motor.atacar(indiceAtacante, indiceDefensor);
+        if (error != null) {
+            JOptionPane.showMessageDialog(this, error, "Error", JOptionPane.WARNING_MESSAGE);
+        }
+
+        actualizarVista();
+        verificarFin();
+    }
