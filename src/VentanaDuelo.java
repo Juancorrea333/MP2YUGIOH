@@ -68,4 +68,35 @@ public class VentanaDuelo extends JFrame {
 
         return panel;
     }
-}
+
+    private JPanel crearPanelCentral() {
+        JPanel panel = new JPanel(new GridLayout(1, 2, 5, 5));
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+
+        JPanel panelCampos = new JPanel(new GridLayout(2, 1, 5, 5));
+
+        lstCampoRival  = new JList<>(modeloCampoRival);
+        lstCampoPropio = new JList<>(modeloCampoPropio);
+
+        JScrollPane scrollRival  = new JScrollPane(lstCampoRival);
+        JScrollPane scrollPropio = new JScrollPane(lstCampoPropio);
+
+        scrollRival.setBorder(BorderFactory.createTitledBorder("Campo Rival"));
+        scrollPropio.setBorder(BorderFactory.createTitledBorder("Tu Campo"));
+
+        panelCampos.add(scrollRival);
+        panelCampos.add(scrollPropio);
+
+        txtLog = new JTextArea();
+        txtLog.setEditable(false);
+        txtLog.setLineWrap(true);
+        txtLog.setWrapStyleWord(true);
+        JScrollPane scrollLog = new JScrollPane(txtLog);
+        scrollLog.setBorder(BorderFactory.createTitledBorder("Log del Duelo"));
+
+        panel.add(panelCampos);
+        panel.add(scrollLog);
+
+        return panel;
+    }
+}  
