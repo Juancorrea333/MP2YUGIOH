@@ -247,3 +247,88 @@ public class VentanaDuelo extends JFrame {
         actualizarVista();
         verificarFin();
     }
+
+        private void accionPasarTurno() {
+        motor.pasarTurno();
+        motor.iniciarTurno();
+        actualizarVista();
+        verificarFin();
+
+        if (!motor.isJuegoTerminado()) {
+            JOptionPane.showMessageDialog(this,
+                "Turno " + motor.getNumeroTurno() + " — Le toca a: " + motor.getActivo().getNombre(),
+                "Cambio de turno", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void actualizarVista() {
+        Jugador activo   = motor.getActivo();
+        Jugador oponente = motor.getOponente();
+
+        lblTurno.setText("Turno: " + motor.getNumeroTurno());
+        lblJugadorActivo.setText("Turno de: " + activo.getNombre());
+        lblLpPropio.setText("Tus LP: " + activo.getLp());
+        lblLpRival.setText("LP Rival (" + oponente.getNombre() + "): " + oponente.getLp());
+        lblMazoPropio.setText("Tu mazo: " + activo.getMazo().size() + " cartas");
+        lblMazoRival.setText("Mazo rival: " + oponente.getMazo().size() + " cartas");
+
+        modeloCampoRival.clear();
+        for (Monstruo m : oponente.getCampo()) {
+            modeloCampoRival.addElement(m.getNombre()
+                + " | ATK:" + m.getAtk()
+                + " DEF:" + m.getDef()
+                + " | " + m.getPosicion());
+        }
+        if (oponente.tieneTrampas()) {
+            modeloCampoRival.addElement("[ " + oponente.getTrampas().size() + " trampa(s) boca abajo ]");
+        }
+
+        modeloCampoPropio.clear();
+        for (Monstruo m : activo.getCampo()) {
+            String puede = m.puedeAtacar() ? " ⚔" : "";
+            modeloCampoPropio.addElement(m.getNombre()
+                + " | ATK:" + m.getAtk()
+                + " DEF:" + m.getDef()
+                + " | " + m.getPosicion() + puede);
+        }
+        if (activo.tieneTrampas()) {
+            modeloCampoPropio.addElement("[ " + activo.getTrampas().size() + " trampa(s) boca abajo ]");
+        }
+
+        modeloMano.clear();
+        for (Carta c : activo.getMano()) {
+            if (c.esMonstruo()) {
+                Monstruo m = c.comoMonstruo();
+                modeloMano.addElement("[MONSTRUO] " + m.getNombre()
+                    + " ATK:" + m.getAtk()
+                    + " DEF:" + m.getDef()
+                    + " LVL:" + m.getNivel());
+            } else if (c instanceof Magica) {
+                modeloMano.addElement("[MAGICA] " + c.getNombre()
+                    + " - " + ((Magica) c).getDescripcion());
+            } else if (c instanceof Trampa) {
+                modeloMano.addElement("[TRAMPA] " + c.getNombre()
+                    + " - " + ((Trampa) c).getDescripcion());
+            }
+        }
+
+        txtLog.setText("");
+        for (String msg : motor.getLog()) {
+            txtLog.append(msg + "\n");
+        }
+        txtLog.setCaretPosition(txtLog.getDocument().getLength());
+
+        boolean esActivo = !motor.isJuegoTerminado();
+        btnJugarCarta.setEnabled(esActivo && !motor.yaJugoUnaCarta());
+        btnAtacar.setEnabled(esActivo && !motor.esPrimerTurno() && !motor.yaAtaco());
+        btnPasarTurno.setEnabled(esActivo);
+    }
+
+    private void verificarFin() {
+        if (motor.isJuegoTerminado()) {
+            VentanaFin fin = new VentanaFin(motor.getGanador().getNombre());
+            fin.setVisible(true);
+            this.dispose();
+        }
+    }
+}
