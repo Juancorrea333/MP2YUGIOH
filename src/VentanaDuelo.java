@@ -128,4 +128,68 @@ public class VentanaDuelo extends JFrame {
 
         return panel;
     }
-}
+    private void accionJugarCarta() {
+        int indiceCarta = lstMano.getSelectedIndex();
+        if (indiceCarta < 0) {
+            JOptionPane.showMessageDialog(this, "Selecciona una carta de tu mano.", "Sin selección", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if (motor.yaJugoUnaCarta()) {
+            JOptionPane.showMessageDialog(this, "Ya jugaste una carta este turno.", "Acción no permitida", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Carta carta = motor.getActivo().getMano().get(indiceCarta);
+
+        if (carta.esMonstruo()) {
+            accionJugarMonstruo(indiceCarta, carta.comoMonstruo());
+        } else {
+            String error = motor.jugarCarta(indiceCarta, Posicion.ATAQUE, -1);
+            if (error != null) {
+                JOptionPane.showMessageDialog(this, error, "Error", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+
+        actualizarVista();
+        verificarFin();
+    }
+
+    private void accionJugarMonstruo(int indiceCarta, Monstruo monstruo) {
+        int indiceSacrificio = -1;
+
+        if (monstruo.getNivel() > 4) {
+            List<Monstruo> campo = motor.getActivo().getCampo();
+            if (campo.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                    "Necesitas un monstruo en campo para sacrificar.",
+                    "Sacrificio requerido", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String[] opciones = campo.stream()
+                .map(m -> m.getNombre() + " ATK:" + m.getAtk())
+                .toArray(String[]::new);
+            String eleccion = (String) JOptionPane.showInputDialog(this,
+                "Elige el monstruo a sacrificar:",
+                "Sacrificio", JOptionPane.PLAIN_MESSAGE, null, opciones, opciones[0]);
+            if (eleccion == null) return;
+            for (int i = 0; i < opciones.length; i++) {
+                if (opciones[i].equals(eleccion)) { indiceSacrificio = i; break; }
+            }
+        }
+
+        String[] posOpciones = {"Ataque", "Defensa"};
+        int posEleccion = JOptionPane.showOptionDialog(this,
+            "¿En qué posición invocar a " + monstruo.getNombre() + "?",
+            "Posición de invocación",
+            JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE,
+            null, posOpciones, posOpciones[0]);
+
+        if (posEleccion < 0) return;
+
+        Posicion posicion = posEleccion == 0 ? Posicion.ATAQUE : Posicion.DEFENSA;
+        String error = motor.jugarCarta(indiceCarta, posicion, indiceSacrificio);
+        if (error != null) {
+            JOptionPane.showMessageDialog(this, error, "Error", JOptionPane.WARNING_MESSAGE);
+        }
+    }
