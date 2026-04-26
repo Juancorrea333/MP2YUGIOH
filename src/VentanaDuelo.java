@@ -156,25 +156,49 @@ public class VentanaDuelo extends JFrame {
     }
 
     private void accionJugarMonstruo(int indiceCarta, Monstruo monstruo) {
-        int indiceSacrificio = -1;
+        int indiceSacrificio  = -1;
+        int indiceSacrificio2 = -1;
 
         if (monstruo.getNivel() > 4) {
+            int sacrificiosRequeridos = monstruo.getNivel() >= 7 ? 2 : 1;
             List<Monstruo> campo = motor.getActivo().getCampo();
-            if (campo.isEmpty()) {
+
+            if (campo.size() < sacrificiosRequeridos) {
                 JOptionPane.showMessageDialog(this,
-                    "Necesitas un monstruo en campo para sacrificar.",
+                    "Necesitas " + sacrificiosRequeridos + " monstruo(s) en campo para sacrificar.",
                     "Sacrificio requerido", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            String[] opciones = campo.stream()
-                .map(m -> m.getNombre() + " ATK:" + m.getAtk())
-                .toArray(String[]::new);
+
+            // Primer sacrificio
+            String[] opciones = new String[campo.size()];
+            for (int i = 0; i < campo.size(); i++) {
+                opciones[i] = i + ": " + campo.get(i).getNombre() + " ATK:" + campo.get(i).getAtk();
+            }
             String eleccion = (String) JOptionPane.showInputDialog(this,
-                "Elige el monstruo a sacrificar:",
+                "Elige el monstruo a sacrificar (1/" + sacrificiosRequeridos + "):",
                 "Sacrificio", JOptionPane.PLAIN_MESSAGE, null, opciones, opciones[0]);
             if (eleccion == null) return;
-            for (int i = 0; i < opciones.length; i++) {
-                if (opciones[i].equals(eleccion)) { indiceSacrificio = i; break; }
+            indiceSacrificio = Integer.parseInt(eleccion.split(":")[0]);
+
+            // Segundo sacrificio (nivel 7+)
+            if (sacrificiosRequeridos == 2) {
+                // Lista sin el primero
+                String[] opciones2 = new String[campo.size() - 1];
+                int idx = 0;
+                for (int i = 0; i < campo.size(); i++) {
+                    if (i != indiceSacrificio) {
+                        opciones2[idx++] = i + ": " + campo.get(i).getNombre() + " ATK:" + campo.get(i).getAtk();
+                    }
+                }
+                String eleccion2 = (String) JOptionPane.showInputDialog(this,
+                    "Elige el segundo monstruo a sacrificar (2/2):",
+                    "Segundo Sacrificio", JOptionPane.PLAIN_MESSAGE, null, opciones2, opciones2[0]);
+                if (eleccion2 == null) return;
+                // El índice en opciones2 apunta al campo original
+                int idxOriginal = Integer.parseInt(eleccion2.split(":")[0]);
+                // Ajustar índice en campo reducido (el primer sacrificio ya se removerá)
+                indiceSacrificio2 = idxOriginal > indiceSacrificio ? idxOriginal - 1 : idxOriginal;
             }
         }
 
@@ -188,7 +212,7 @@ public class VentanaDuelo extends JFrame {
         if (posEleccion < 0) return;
 
         Posicion posicion = posEleccion == 0 ? Posicion.ATAQUE : Posicion.DEFENSA;
-        String error = motor.jugarCarta(indiceCarta, posicion, indiceSacrificio);
+        String error = motor.jugarCarta(indiceCarta, posicion, indiceSacrificio, indiceSacrificio2);
         if (error != null) {
             JOptionPane.showMessageDialog(this, error, "Error", JOptionPane.WARNING_MESSAGE);
         }
@@ -210,33 +234,31 @@ public class VentanaDuelo extends JFrame {
             return;
         }
 
-        String[] atacantes = campoPropio.stream()
-            .map(m -> m.getNombre() + " ATK:" + m.getAtk() + " " + m.getPosicion())
-            .toArray(String[]::new);
+        String[] atacantes = new String[campoPropio.size()];
+        for (int i = 0; i < campoPropio.size(); i++) {
+            Monstruo m = campoPropio.get(i);
+            atacantes[i] = i + ": " + m.getNombre() + " ATK:" + m.getAtk() + " " + m.getPosicion();
+        }
         String eleccionAtacante = (String) JOptionPane.showInputDialog(this,
             "Elige tu monstruo atacante:",
             "Atacar", JOptionPane.PLAIN_MESSAGE, null, atacantes, atacantes[0]);
         if (eleccionAtacante == null) return;
-
-        int indiceAtacante = 0;
-        for (int i = 0; i < atacantes.length; i++) {
-            if (atacantes[i].equals(eleccionAtacante)) { indiceAtacante = i; break; }
-        }
+        int indiceAtacante = Integer.parseInt(eleccionAtacante.split(":")[0]);
 
         int indiceDefensor = -1;
         List<Monstruo> campoRival = motor.getOponente().getCampo();
 
         if (!campoRival.isEmpty()) {
-            String[] defensores = campoRival.stream()
-                .map(m -> m.getNombre() + " ATK:" + m.getAtk() + " DEF:" + m.getDef() + " " + m.getPosicion())
-                .toArray(String[]::new);
+            String[] defensores = new String[campoRival.size()];
+            for (int i = 0; i < campoRival.size(); i++) {
+                Monstruo m = campoRival.get(i);
+                defensores[i] = i + ": " + m.getNombre() + " ATK:" + m.getAtk() + " DEF:" + m.getDef() + " " + m.getPosicion();
+            }
             String eleccionDefensor = (String) JOptionPane.showInputDialog(this,
                 "Elige el monstruo rival a atacar:",
                 "Seleccionar objetivo", JOptionPane.PLAIN_MESSAGE, null, defensores, defensores[0]);
             if (eleccionDefensor == null) return;
-            for (int i = 0; i < defensores.length; i++) {
-                if (defensores[i].equals(eleccionDefensor)) { indiceDefensor = i; break; }
-            }
+            indiceDefensor = Integer.parseInt(eleccionDefensor.split(":")[0]);
         }
 
         String error = motor.atacar(indiceAtacante, indiceDefensor);

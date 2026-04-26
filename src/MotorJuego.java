@@ -15,6 +15,8 @@ public class MotorJuego {
 
     private List<String> log = new ArrayList<>();
 
+    private Jugador primerJugador;
+
     public MotorJuego(Jugador j1, Jugador j2) {
         this.jugador1       = j1;
         this.jugador2       = j2;
@@ -31,6 +33,7 @@ public class MotorJuego {
             this.activo   = j2;
             this.oponente = j1;
         }
+        this.primerJugador = this.activo;
     }
 
     public Jugador  getActivo()        { return activo; }
@@ -38,7 +41,15 @@ public class MotorJuego {
     public int      getNumeroTurno()   { return numeroTurno; }
     public boolean  isJuegoTerminado() { return juegoTerminado; }
     public Jugador  getGanador()       { return ganador; }
-    public boolean  esPrimerTurno()    { return numeroTurno == 1; }
+    public boolean esPrimerTurno() {
+        // El primer turno del jugador que abre es el turno 1.
+        // El primer turno del segundo jugador es el turno 2.
+        // En ambos casos no se puede atacar.
+        return numeroTurno <= 2 && (
+            (activo == primerJugador && numeroTurno == 1) ||
+            (activo != primerJugador && numeroTurno == 2)
+        );
+    }
     public boolean  yaJugoUnaCarta()   { return yaJugoUnaCarta; }
     public boolean  yaAtaco()          { return yaAtaco; }
 
@@ -68,6 +79,10 @@ public class MotorJuego {
     }
 
     public String jugarCarta(int indiceCarta, Posicion posicion, int indiceSacrificio) {
+        return jugarCarta(indiceCarta, posicion, indiceSacrificio, -1);
+    }
+
+    public String jugarCarta(int indiceCarta, Posicion posicion, int indiceSacrificio, int indiceSacrificio2) {
         if (yaJugoUnaCarta) {
             return "Ya jugaste una carta este turno.";
         }
@@ -81,15 +96,28 @@ public class MotorJuego {
         Carta carta = mano.get(indiceCarta);
 
         if (carta.esMonstruo() && carta.comoMonstruo().getNivel() > 4) {
-            if (!activo.tieneMonstruos()) {
-                return "Necesitas sacrificar un monstruo para invocar un monstruo de nivel 5 o más.";
-            }
+            int sacrificiosRequeridos = carta.comoMonstruo().getNivel() >= 7 ? 2 : 1;
             List<Monstruo> campo = activo.getCampo();
+            if (campo.size() < sacrificiosRequeridos) {
+                return "Necesitas " + sacrificiosRequeridos + " monstruo(s) en campo para invocar este monstruo (nivel " + carta.comoMonstruo().getNivel() + ").";
+            }
+            // indiceSacrificio contiene el primer sacrificio; indiceSacrificio2 el segundo (si aplica)
             if (indiceSacrificio < 0 || indiceSacrificio >= campo.size()) {
                 return "Índice de sacrificio no válido.";
             }
-            activo.removerMonstruo(campo.get(indiceSacrificio));
-            log("¡Sacrificio realizado!");
+            Monstruo primero = campo.get(indiceSacrificio);
+            activo.removerMonstruo(primero);
+            if (sacrificiosRequeridos == 2) {
+                if (indiceSacrificio2 < 0 || indiceSacrificio2 >= activo.getCampo().size()) {
+                    // revertir: devolver el primer sacrificio
+                    activo.invocarMonstruo(primero);
+                    return "Índice del segundo sacrificio no válido.";
+                }
+                activo.removerMonstruo(activo.getCampo().get(indiceSacrificio2));
+                log("¡Doble sacrificio realizado!");
+            } else {
+                log("¡Sacrificio realizado!");
+            }
         }
 
         if (carta.esMonstruo()) {
@@ -224,6 +252,21 @@ public class MotorJuego {
         if (atacante.getAtk() > valorDefensor) {
             if (defensor.getPosicion() == Posicion.ATAQUE) {
                 int danio = atacante.getAtk() - valorDefensor;
+
+                boolean hayEscudo = tieneTrampaActiva(oponente, CondicionTrampa.AL_RECIBIR_DANIO, "Escudo Divino");
+                boolean hayEspejo = tieneTrampaActiva(oponente, CondicionTrampa.AL_RECIBIR_DANIO, "Espejo del Alma");
+
+                if (hayEscudo) {
+                    danio = danio / 2;
+                    log("¡Escudo Divino reduce el daño a " + danio + "!");
+                    removerTrampaUsada(oponente, "Escudo Divino");
+                }
+                if (hayEspejo) {
+                    activo.recibirDanio(danio);
+                    log("¡Espejo del Alma! " + activo.getNombre() + " también recibe " + danio + " de daño.");
+                    removerTrampaUsada(oponente, "Espejo del Alma");
+                }
+
                 oponente.recibirDanio(danio);
                 log(defensor.getNombre() + " destruido. Daño: " + danio + ". LP " + oponente.getNombre() + ": " + oponente.getLp());
             } else {
@@ -241,6 +284,21 @@ public class MotorJuego {
             }
         } else {
             int danio = valorDefensor - atacante.getAtk();
+
+            boolean hayEscudo = tieneTrampaActiva(activo, CondicionTrampa.AL_RECIBIR_DANIO, "Escudo Divino");
+            boolean hayEspejo = tieneTrampaActiva(activo, CondicionTrampa.AL_RECIBIR_DANIO, "Espejo del Alma");
+
+            if (hayEscudo) {
+                danio = danio / 2;
+                log("¡Escudo Divino reduce el daño a " + danio + "!");
+                removerTrampaUsada(activo, "Escudo Divino");
+            }
+            if (hayEspejo) {
+                oponente.recibirDanio(danio);
+                log("¡Espejo del Alma! " + oponente.getNombre() + " también recibe " + danio + " de daño.");
+                removerTrampaUsada(activo, "Espejo del Alma");
+            }
+
             activo.recibirDanio(danio);
             activo.removerMonstruo(atacante);
             log(atacante.getNombre() + " destruido. Daño a " + activo.getNombre() + ": " + danio + ". LP: " + activo.getLp());
