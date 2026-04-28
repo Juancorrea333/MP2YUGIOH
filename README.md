@@ -5,8 +5,9 @@ El sistema permite a dos jugadores enfrentarse usando cartas de monstruos, carta
 
 ## Cómo ejecutar
 Compilar todos los archivos desde la carpeta src/:
-bash javac *.java
-java Main
+---- bash 
+---- javac *.java
+---- java Main
 
 Al iniciar, se abrirá una ventana donde se ingresan los nombres de los dos usuarios. El juego baraja automáticamente un mazo de 50 cartas, reparte 25 a cada jugador y elige al azar quién empieza.
 
